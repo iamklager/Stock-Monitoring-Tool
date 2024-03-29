@@ -13,7 +13,23 @@ ui <- page_sidebar(
     # Portfolio composition
     DTOutput("out_PortComp"),
     
-    # Update button
+    # Add and remove stocks
+    DTOutput("out_AddRemStock"),
+    div(
+      style = "display: inline-block;",
+      actionButton(
+        inputId = "in_AddStock",
+        label = "Add",
+        width = '49%'
+      ),
+      actionButton(
+        inputId = "in_RemoveStock",
+        label = "Remove",
+        width = '49%'
+      )
+    ),
+    
+    # Update portfolio button
     actionButton(
       inputId = "in_UpdatePortfolio",
       label = "Update"
