@@ -1,4 +1,4 @@
-server <- function(input, output) {
+server <- function(input, output, session) {
   
   ## Reactive values
   l_RVals <- reactiveValues(
@@ -12,7 +12,7 @@ server <- function(input, output) {
     )
   )
   
-  ## Outputs
+  ## Inputs
   # Add/remove stock
   output$out_AddRemStock <- renderDT({
     DT::datatable(
@@ -91,4 +91,49 @@ server <- function(input, output) {
       l_RVals$df_AddRemStock[1, ] <- c("", 0)
     }
   )
+  # Update portfolio
+  observeEvent(
+    eventExpr = input$in_UpdatePortfolio,
+    handlerExpr = {
+      # OHLC stock input
+      updateSelectInput(
+        session = session,
+        inputId = "in_OHLCStock",
+        choices = unique(l_RVals$df_PortComp$Stock)
+      )
+      l_RVals$Stocks <- f_QueryStocks(l_RVals$df_PortComp$Stock)
+      l_RVals$Dates <- as.Date(unique(unlist(lapply(l_RVals$Stocks, rownames))))
+    }
+  )
+  
+  ## Outputs
+  output$out_hcOHLC <- renderHighchart({
+    req(input$in_UpdatePortfolio)
+    f_hcOHLC(l_RVals$Stocks, input$in_OHLCStock)
+  })
+  output$out_hcCorrMat <- renderHighchart({
+    req(input$in_UpdatePortfolio)
+    f_hcCorrMat(stock = l_RVals$Stocks, method = input$in_CorrMethod)
+  })
+  output$out_hcCumRet <- renderHighchart({
+    req(input$in_UpdatePortfolio)
+    f_hcCumRet(l_RVals$Stocks)
+  })
+  output$out_RiskContr <- renderDT({
+    req(input$in_UpdatePortfolio)
+    DT::datatable(
+      data = f_RiskComp(l_RVals$Stocks, l_RVals$df_PortComp),
+      editable = FALSE,
+      options = list(
+        dom = 't', 
+        ordering = TRUE,
+        autoWidth = TRUE,
+        columnDefs = list(
+          list(className = "dt-right", targets = 1:5)
+        )
+      ), 
+      rownames = FALSE
+    )
+  })
 }
+

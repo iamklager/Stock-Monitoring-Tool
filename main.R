@@ -12,6 +12,11 @@ cat("\14")
 source("Code/libraries.R")
 
 
+### Custom stuff ----
+source("Code/custom_hc_theme.R")
+source("Code/custom_functions.R")
+
+
 ### Shiny ----
 source("Code/ui.R")
 source("Code/server.R")
