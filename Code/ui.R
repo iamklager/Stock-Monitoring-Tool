@@ -16,16 +16,16 @@ ui <- page_sidebar(
     # Add and remove stocks
     DTOutput("out_AddRemStock"),
     div(
-      style = "display: inline-block;vertical-align:top;",
+      style = "display: inline-block;horizontal-align:top;",
       actionButton(
         inputId = "in_AddStock",
         label = "Add",
-        width = '48%'
+        width = '49%'
       ),
       actionButton(
         inputId = "in_RemoveStock",
         label = "Remove",
-        width = '48%'
+        width = '49%'
       )
     ),
     
@@ -39,8 +39,10 @@ ui <- page_sidebar(
       inputId = "in_DateRange",
       label = "Time-Frame",
       start = Sys.Date(),
-      end = Sys.Date()
+      end = Sys.Date(),
+      format = 
     ),
+    tags$style("#in_CorrMethod {background-color:blue;}"),
     selectInput(
       inputId = "in_CorrMethod",
       label = "Corrrelation Method",
@@ -48,15 +50,15 @@ ui <- page_sidebar(
     ),
     selectInput(
       inputId = "in_OHLCStock",
-      label = "Stock",
+      label = "OHLC",
       choices = ""
     )
   ),
   
   ## Single stock chart
   fluidRow(
-    title = "Cumulated Returns",
-    highchartOutput("out_hcCumRet")
+    title = "Price Development",
+    highchartOutput("out_hcPriceDev")
   ),
   fluidRow(
     title = "Correlation and Risk Contribution",

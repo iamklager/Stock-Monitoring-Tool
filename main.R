@@ -9,18 +9,19 @@ cat("\14")
 
 
 ### Libraries ----
-source("Code/libraries.R")
+source("code/libraries.R")
 
 
 ### Custom stuff ----
-source("Code/custom_hc_theme.R")
-source("Code/custom_functions.R")
+source("code/custom_hc_theme.R")
+source("code/custom_functions.R")
 
 
 ### Shiny ----
-source("Code/ui.R")
-source("Code/server.R")
+source("code/ui.R")
+source("code/server.R")
 
 
 ### Running the app ----
 shinyApp(ui, server)
+

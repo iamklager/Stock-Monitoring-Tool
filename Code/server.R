@@ -2,13 +2,11 @@ server <- function(input, output, session) {
   
   ## Reactive values
   l_RVals <- reactiveValues(
-    df_PortComp = data.frame(
-      "Stock" = c("GOOG", "AMZN", "MSFT", "TSLA"),
-      "Weight" = rep(0.25, 4)
-    ),
+    c_Today = Sys.Date(),
+    df_PortComp = read.csv("data/df_PortComp.csv"),
     df_AddRemStock = data.frame(
-      "Stock" = c("JNJ"),
-      "Weight" = rep(0.1)
+      "Stock" = "Ticker",
+      "Weight" = 0
     )
   )
   
@@ -95,34 +93,38 @@ server <- function(input, output, session) {
   observeEvent(
     eventExpr = input$in_UpdatePortfolio,
     handlerExpr = {
+      # Save portfolio composition
+      write.csv(x = l_RVals$df_PortComp, file = "data/df_PortComp.csv", row.names = FALSE)
       # OHLC stock input
       updateSelectInput(
         session = session,
         inputId = "in_OHLCStock",
         choices = unique(l_RVals$df_PortComp$Stock)
       )
-      l_RVals$Stocks <- f_QueryStocks(l_RVals$df_PortComp$Stock)
-      l_RVals$Dates <- as.Date(unique(unlist(lapply(l_RVals$Stocks, rownames))))
+      l_RVals$Stocks <- f_QueryStocks(l_RVals$df_PortComp$Stock, l_RVals$c_Today)
+      l_RVals$Dates <- f_GetDates(l_RVals$Stocks)
+      updateDateRangeInput(
+        session = session,
+        inputId = "in_DateRange",
+        start = l_RVals$Dates[1],
+        end = l_RVals$Dates[length(l_RVals$Dates)]
+      )
     }
   )
   
   ## Outputs
-  output$out_hcOHLC <- renderHighchart({
+  output$out_hcPriceDev <- renderHighchart({
     req(input$in_UpdatePortfolio)
-    f_hcOHLC(l_RVals$Stocks, input$in_OHLCStock)
+    f_hcPriceDev(l_RVals$Stocks, input$in_DateRange[1], input$in_DateRange[2])
   })
   output$out_hcCorrMat <- renderHighchart({
     req(input$in_UpdatePortfolio)
-    f_hcCorrMat(stock = l_RVals$Stocks, method = input$in_CorrMethod)
-  })
-  output$out_hcCumRet <- renderHighchart({
-    req(input$in_UpdatePortfolio)
-    f_hcCumRet(l_RVals$Stocks)
+    f_hcCorrMat(stock = l_RVals$Stocks, input$in_DateRange[1], input$in_DateRange[2], method = input$in_CorrMethod)
   })
   output$out_RiskContr <- renderDT({
     req(input$in_UpdatePortfolio)
     DT::datatable(
-      data = f_RiskComp(l_RVals$Stocks, l_RVals$df_PortComp),
+      data = f_RiskComp(l_RVals$Stocks, l_RVals$df_PortComp, input$in_DateRange[1], input$in_DateRange[2]),
       editable = FALSE,
       options = list(
         dom = 't', 
@@ -134,6 +136,10 @@ server <- function(input, output, session) {
       ), 
       rownames = FALSE
     )
+  })
+  output$out_hcOHLC <- renderHighchart({
+    req(input$in_UpdatePortfolio)
+    f_hcOHLC(l_RVals$Stocks, input$in_OHLCStock)
   })
 }
 

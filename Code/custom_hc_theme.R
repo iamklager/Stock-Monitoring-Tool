@@ -3,7 +3,7 @@
 
 
 hc_theme_bs_superhero <- function() {
-  theme <- hc_theme_flat(
+  theme <- highcharter::hc_theme_flat(
     chart = list(
       backgroundColor = "#1A2F40",
       style = list(

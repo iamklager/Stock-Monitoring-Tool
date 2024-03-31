@@ -2,16 +2,31 @@
 
 
 ### Query stock prices ----
-f_QueryStocks <- function(ticker_symbols, last_date) {
+f_QueryStocks <- function(ticker_symbols, current_date) {
+  # Checking already queried files
+  files <- list.files(path = "data/price_data/", pattern = ".RDS")
+  old_files <- files[sub(".*_(\\d{4}-\\d{2}-\\d{2})\\.RDS", "\\1", files) != current_date]
+  if (length(old_files) != 0) {
+    file.remove(paste0("data/price_data/", old_files))
+  }
+  files <- files[!(files %in% old_files)]
+  
+  # Querying files if needed
   res <- lapply(ticker_symbols, function(symbol) {
+    file_name <- paste0(symbol, "_", current_date, ".RDS")
     tryCatch(
       expr = {
-        stock <- quantmod::getSymbols(
-          Symbols = symbol,
-          env = NULL,
-          src = "yahoo"
-        )
-        colnames(stock) <- gsub(paste0("^", symbol, "."), "", colnames(stock))
+        if (file_name %in% files) {
+          stock <- readRDS(paste0("data/price_data/", file_name))
+        } else {
+          stock <- quantmod::getSymbols(
+            Symbols = symbol,
+            env = NULL,
+            src = "yahoo"
+          )
+          colnames(stock) <- gsub(paste0("^", symbol, "."), "", colnames(stock))
+          saveRDS(stock, paste0("data/price_data/", file_name))
+        }
         stock
       },
       error = function(e) {
@@ -26,29 +41,39 @@ f_QueryStocks <- function(ticker_symbols, last_date) {
 }
 
 
+### Get dates ----
+f_GetDates <- function(stocks) {
+  stocks <- lapply(stocks, function(x) { as.character(index(x)) })
+  first_date <- max(unlist(lapply(stocks, function(x) { x[1] })))
+  res <- sort(unique(unlist(stocks)), decreasing = FALSE)
+  res <- as.Date(res[res >= first_date])
+  
+  return(res)
+}
+
+
 ### Cumulated returns ----
-f_hcCumRet <- function(stocks, start_date = "2020-01-01") {
+f_hcPriceDev <- function(stocks, start_date, end_date) {
   df_CumReturns <- bind_rows(lapply(1:length(stocks), function(i) {
     x <- as.data.frame(stocks[[i]])
     x$Date <- as.Date(row.names(x))
     row.names(x) <- NULL
     x <- x[x$Date >= start_date, ]
-    x$DeltaPrice <- c(0, diff(x$Close)/x$Close[-nrow(x)])
-    x$DeltaPrice[is.na(x$DeltaPrice)] <- 0
-    x$CumReturns <- cumsum(x$DeltaPrice)
+    x$PriceDev <- x$Close/x$Close[1] - 1
     x$Stock <- names(stocks)[i]
     
-    return(x[, c("Stock", "Date", "CumReturns")])
+    return(x[, c("Stock", "Date", "PriceDev")])
   }))
   
   df_CumReturns %>%
-    hchart("line", hcaes(x = Date, y = CumReturns, group = Stock)) %>%
+    hchart("line", hcaes(x = Date, y = PriceDev, group = Stock)) %>%
+    hc_yAxis(title = list(text = "Price Development")) %>%
     hc_add_theme(hc_theme_bs_superhero())
 }
 
 
 ### Correlation matrix ----
-f_hcCorrMat <- function(stocks, method = "pearson") {
+f_hcCorrMat <- function(stocks, start_date, end_date, method = "pearson") {
   df_LogReturns <- lapply(1:length(stocks), function(i) {
     x <- as.data.frame(stocks[[i]])
     x["Date"] <- as.Date(rownames(x))
@@ -56,15 +81,25 @@ f_hcCorrMat <- function(stocks, method = "pearson") {
     
     return(x[, c("Date", names(stocks)[i])])
   })
-  df_LogReturns <- Reduce(function(x, y) {merge(x, y, all = TRUE) }, df_LogReturns)
+  df_LogReturns <- Reduce(function(x, y) { merge(x, y, all = TRUE) }, df_LogReturns)
   m_Corr <- cor(x = df_LogReturns[, -1], method = method, use = "complete.obs")
+  m_Corr <- m_Corr[order(colnames(m_Corr)), order(colnames(m_Corr))]
+  # m_Corr[lower.tri(m_Corr, diag = FALSE)] <- NA
+  m_Corr <- reshape2::melt(m_Corr)
   
-  hchart(m_Corr) %>% hc_add_theme(hc_theme_bs_superhero())
+  hchart(object = m_Corr, type = "heatmap", hcaes(x = Var1, y = Var2, valuie = value)) %>%
+    hc_plotOptions(heatmap = list(dataLabels = list(enabled = TRUE, format = "{point.value:.2f}"))) %>%
+    hc_colorAxis(min = -1, max = 1,stops = color_stops(n = 20, colors = c("#7cb5ec", "#3B4D5B", "#f7a35c"))) %>%
+    hc_xAxis(labels = list(style = list(fontSize = "10px")), title = list(text = "")) %>%
+    hc_yAxis(labels = list(style = list(fontSize = "10px")), title = list(text = ""), reversed = TRUE) %>%
+    hc_tooltip(pointFormat = "rho: {point.value:.3f}") %>%
+    hc_legend(layout = "vertical", align = "right", verticalAlign = "middle") %>%
+    hc_add_theme(hc_theme_bs_superhero())
 }
 
 
 ### Risk contribtution ----
-f_RiskComp <- function(stocks, port_comp) {
+f_RiskComp <- function(stocks, port_comp, start_date, end_date) {
   # Preprocessing the portfolio composition
   port_comp <- port_comp[port_comp$Stock %in% names(stocks), ]
   port_comp <- aggregate.data.frame(port_comp$Weight, by = list(port_comp$Stock), sum)
@@ -114,8 +149,8 @@ f_RiskComp <- function(stocks, port_comp) {
 
 ### OHCL chart ----
 f_hcOHLC <- function(stocks, ticker_symbol) {
-  highchart(type = "stock") %>% 
-    hc_add_series(data = stocks[[ticker_symbol]], upColor = "#7cb5ec", color = "#f7a35c") %>% 
+  highchart(type = "stock") %>%
+    hc_add_series(data = stocks[[ticker_symbol]], upColor = "#7cb5ec", color = "#f7a35c") %>%
     hc_add_theme(hc_theme_bs_superhero())
 }
 
