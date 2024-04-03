@@ -42,7 +42,6 @@ ui <- page_sidebar(
       end = Sys.Date(),
       format = 
     ),
-    tags$style("#in_CorrMethod {background-color:blue;}"),
     selectInput(
       inputId = "in_CorrMethod",
       label = "Corrrelation Method",

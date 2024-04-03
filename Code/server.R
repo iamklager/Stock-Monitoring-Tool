@@ -1,5 +1,4 @@
 server <- function(input, output, session) {
-  
   ## Reactive values
   l_RVals <- reactiveValues(
     c_Today = Sys.Date(),

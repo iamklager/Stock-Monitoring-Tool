@@ -74,6 +74,10 @@ f_hcPriceDev <- function(stocks, start_date, end_date) {
 
 ### Correlation matrix ----
 f_hcCorrMat <- function(stocks, start_date, end_date, method = "pearson") {
+  # Filtering by date
+  stocks <- lapply(stocks, window, start = start_date, end = end_date)
+  
+  # Log returns
   df_LogReturns <- lapply(1:length(stocks), function(i) {
     x <- as.data.frame(stocks[[i]])
     x["Date"] <- as.Date(rownames(x))
@@ -82,6 +86,8 @@ f_hcCorrMat <- function(stocks, start_date, end_date, method = "pearson") {
     return(x[, c("Date", names(stocks)[i])])
   })
   df_LogReturns <- Reduce(function(x, y) { merge(x, y, all = TRUE) }, df_LogReturns)
+  
+  # Correlation matrix
   m_Corr <- cor(x = df_LogReturns[, -1], method = method, use = "complete.obs")
   m_Corr <- m_Corr[order(colnames(m_Corr)), order(colnames(m_Corr))]
   # m_Corr[lower.tri(m_Corr, diag = FALSE)] <- NA
@@ -105,6 +111,9 @@ f_RiskComp <- function(stocks, port_comp, start_date, end_date) {
   port_comp <- aggregate.data.frame(port_comp$Weight, by = list(port_comp$Stock), sum)
   colnames(port_comp) <- c("Stock", "Weight")
   port_comp$Weight <- port_comp$Weight/sum(port_comp$Weight)
+  
+  # Filtering by date
+  stocks <- lapply(stocks, window, start = start_date, end = end_date)
   
   # Generating merged log-returns
   returns <- lapply(1:length(stocks), function(i) {
@@ -141,7 +150,7 @@ f_RiskComp <- function(stocks, port_comp, start_date, end_date) {
     PCS = pcs
   )
   row.names(res) <- NULL
-  res[, 2:6] <- round(res[, 2:6], 3)
+  res[, 2:ncol(res)] <- round(res[, 2:ncol(res)], 3)
   
   return(res)
 }
