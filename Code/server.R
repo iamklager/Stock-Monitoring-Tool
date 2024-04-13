@@ -146,7 +146,7 @@ server <- function(input, output, session) {
   output$out_RiskContr <- renderDT({
     req(input$in_UpdatePortfolio)
     DT::datatable(
-      data = f_RiskComp(l_RVals$Stocks, l_RVals$df_PortComp, input$in_DateRangeRisk[1], input$in_DateRangeRisk[2]),
+      data = f_RiskComp(l_RVals$Stocks, l_RVals$df_PortComp, input$in_RFR, input$in_AnnualizeSR, input$in_DateRangeRisk[1], input$in_DateRangeRisk[2]),
       editable = FALSE,
       options = list(
         dom = 't', 

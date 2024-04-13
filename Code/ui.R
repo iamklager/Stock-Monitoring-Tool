@@ -104,6 +104,19 @@ ui <- navbarPage(
             inputId = "in_CorrMethod",
             label = "Corrrelation Method",
             choices = c("pearson", "kendall", "spearman")
+          ),
+          # Risk free rate of return
+          numericInput(
+            inputId = "in_RFR",
+            label = "Risk-Free Rate of Return",
+            value = 0,
+            step = 0.01
+          ),
+          # Annualuzed Sharpe ratio
+          checkboxInput(
+            inputId = "in_AnnualizeSR",
+            label = "Annualize",
+            value = FALSE
           )
         ),
         # Correlation and risk contribution

@@ -24,8 +24,8 @@ f_QueryStocks <- function(ticker_symbols, current_date) {
             env = NULL,
             src = "yahoo"
           )
+          stock <- adjustOHLC(x = stock, symbol.name = symbol)
           colnames(stock) <- gsub(paste0("^", symbol, "."), "", colnames(stock))
-          saveRDS(stock, paste0("data/price_data/", file_name))
         }
         stock
       },
@@ -100,7 +100,9 @@ f_hcCorrMat <- function(stocks, start_date, end_date, method = "pearson") {
     
     return(x[, c("Date", names(stocks)[i])])
   })
-  df_LogReturns <- Reduce(function(x, y) { merge(x, y, all = TRUE) }, df_LogReturns)
+  df_LogReturns <- suppressWarnings(Reduce(function(x, y) {
+    merge(x, y, all = TRUE)
+  }, df_LogReturns))
   
   # Correlation matrix
   m_Corr <- cor(x = df_LogReturns[, -1], method = method, use = "complete.obs")
@@ -120,7 +122,7 @@ f_hcCorrMat <- function(stocks, start_date, end_date, method = "pearson") {
 
 
 ### Risk contribution ----
-f_RiskComp <- function(stocks, port_comp, start_date, end_date) {
+f_RiskComp <- function(stocks, port_comp, rfr, annualize, start_date, end_date) {
   # Preprocessing the portfolio composition
   port_comp <- port_comp[port_comp$Stock %in% names(stocks), c("Stock", "Weight")]
   port_comp <- aggregate.data.frame(port_comp$Weight, by = list(port_comp$Stock), sum)
@@ -139,9 +141,9 @@ f_RiskComp <- function(stocks, port_comp, start_date, end_date) {
     
     return(x[, c("Date", "LogReturns")])
   })
-  returns <- Reduce(function(x, y) { 
+  returns <- suppressWarnings(Reduce(function(x, y) { 
     merge(x, y, by.x = "Date", by.y = "Date", all = TRUE)
-  }, returns)
+  }, returns))
   colnames(returns)[-1] <- names(stocks)
   returns <- returns[, c("Date", port_comp$Stock)]
   port_ret <- rowSums(returns[, -1], na.rm = TRUE)
@@ -149,6 +151,14 @@ f_RiskComp <- function(stocks, port_comp, start_date, end_date) {
   # Risk contribution
   port_sd <- sd(port_ret)
   stand_devs <- apply(returns[, -1], 2, sd, na.rm = TRUE)
+  sharpe_ratios <- apply(returns[, -1], 2, function(x) {
+    sr <- ((mean(x, na.rm = TRUE) - rfr)/sd(x, na.rm = TRUE))
+    if (annualize) {
+      return(sqrt(252)*sr)
+    } else {
+      return(sr)
+    }
+  })
   cov_mat <- cov(returns[, -1], use = "complete.obs")
   alloc_risk <- sqrt(port_comp$Weight %*% cov_mat %*% port_comp$Weight)[1, 1]
   mcs <- ((port_comp$Weight %*% cov_mat)/alloc_risk)[1, ]
@@ -160,6 +170,7 @@ f_RiskComp <- function(stocks, port_comp, start_date, end_date) {
     Stock = port_comp$Stock,
     Weight = port_comp$Weight,
     SD = stand_devs,
+    SR = sharpe_ratios,
     MCS = mcs,
     CS = cs,
     PCS = pcs
