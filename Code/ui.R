@@ -1,78 +1,118 @@
-ui <- page_sidebar(
-  ## Theme
+ui <- navbarPage(
+  ## Design stuff
   theme = bs_theme(preset = "superhero"),
-  
-  ## Title
   title = "Stock Monitoring Tool",
+  selected = "Portfolio Composition",
+  fillable = TRUE,
+  position = "static-top",
+  windowTitle = "Stock Monitoring Tool",
   
-  ## Sidebar
-  sidebar = sidebar(
-    # Options
-    open = "always",
-    
-    # Portfolio composition
-    DTOutput("out_PortComp"),
-    
-    # Add and remove stocks
-    DTOutput("out_AddRemStock"),
-    div(
-      style = "display: inline-block;horizontal-align:top;",
-      actionButton(
-        inputId = "in_AddStock",
-        label = "Add",
-        width = '49%'
-      ),
-      actionButton(
-        inputId = "in_RemoveStock",
-        label = "Remove",
-        width = '49%'
+  ## Portfolio composition
+  nav_panel(
+    title = "Portfolio Composition",
+    value = "Portfolio Composition",
+    card_body(
+      div(
+        style = "
+          margin: 0;
+          width: 50%;
+          position: relative;
+          left: 25%;
+        ",
+        # Portfolio composition
+        DTOutput("out_PortComp"),
+        br(),
+        # Add and remove stocks
+        DTOutput("out_AddRemStock"),
+        layout_column_wrap(
+          width = 1/2,
+          div(
+            style = "display: flex; justify-content: center; align-items: center;",
+            actionButton(
+              inputId = "in_AddStock",
+              label = "Add", width = "50%"
+            )
+          ),
+          div(
+            style = "display: flex; justify-content: center; align-items: center;",
+            actionButton(
+              inputId = "in_RemoveStock",
+              label = "Remove", width = "50%"
+            )
+          )
+        ),
+        br(),
+        # Update portfolio button
+        div(
+          style = "display: flex; justify-content: center; align-items: center;",
+          actionButton(
+            inputId = "in_UpdatePortfolio",
+            label = "Update", width = "50%"
+          )
+        )
       )
-    ),
-    
-    # Update portfolio button
-    actionButton(
-      inputId = "in_UpdatePortfolio",
-      label = "Update"
-    ),
-    # Date range
-    dateRangeInput(
-      inputId = "in_DateRange",
-      label = "Time-Frame",
-      start = Sys.Date(),
-      end = Sys.Date(),
-      format = 
-    ),
-    selectInput(
-      inputId = "in_CorrMethod",
-      label = "Corrrelation Method",
-      choices = c("pearson", "kendall", "spearman")
-    ),
-    selectInput(
-      inputId = "in_OHLCStock",
-      label = "OHLC",
-      choices = ""
     )
   ),
   
-  ## Single stock chart
-  fluidRow(
+  ## Price development
+  nav_panel(
     title = "Price Development",
-    highchartOutput("out_hcPriceDev")
-  ),
-  fluidRow(
-    title = "Correlation and Risk Contribution",
-    column(
-      width = 6,
-      highchartOutput(outputId = "out_hcCorrMat")
-    ),
-    column(
-      width = 6,
-      DTOutput(outputId = "out_RiskContr")
+    card_body(
+      layout_sidebar(
+        sidebar = sidebar(
+          open = "always",
+          # Date range
+          dateRangeInput(
+            inputId = "in_DateRangePrice",
+            label = "Time-Frame",
+            start = Sys.Date(),
+            end = Sys.Date(),
+            format = 
+          ),
+          # Stock selection
+          selectInput(
+            inputId = "in_OHLCStock",
+            label = "Stock",
+            choices = ""
+          )
+        ),
+        # Price development
+        highchartOutput("out_hcPriceDev"),
+        # OHLC
+        highchartOutput("out_hcOHLC")
+      )
     )
   ),
-  fluidRow(
-    title = "OHLC",
-    highchartOutput("out_hcOHLC")
-  )
   
+  ## Risk Contribution
+  nav_panel(
+    title = "Risk Contribution",
+    card_body(
+      layout_sidebar(
+        sidebar = sidebar(
+          open = "always",
+          # Date range
+          dateRangeInput(
+            inputId = "in_DateRangeRisk",
+            label = "Time-Frame",
+            start = Sys.Date(),
+            end = Sys.Date(),
+            format = 
+          ),
+          # Correlation method
+          selectInput(
+            inputId = "in_CorrMethod",
+            label = "Corrrelation Method",
+            choices = c("pearson", "kendall", "spearman")
+          )
+        ),
+        # Correlation and risk contribution
+        layout_column_wrap(
+          width = 1/2,
+          highchartOutput(outputId = "out_hcCorrMat"),
+          DTOutput(outputId = "out_RiskContr")
+        )
+      )
+    )
+  )
 )

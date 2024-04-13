@@ -5,7 +5,8 @@ server <- function(input, output, session) {
     df_PortComp = read.csv("data/df_PortComp.csv"),
     df_AddRemStock = data.frame(
       "Stock" = "Ticker",
-      "Weight" = 0
+      "Weight" = 0,
+      "PurchaseDate" = as.character(Sys.Date())
     )
   )
   
@@ -20,8 +21,8 @@ server <- function(input, output, session) {
         ordering = FALSE,
         autoWidth = TRUE,
         columnDefs = list(
-          list(width = "50%", targets = "_all"),
-          list(className = "dt-right", targets = 1)
+          list(width = "33%", targets = "_all"),
+          list(className = "dt-right", targets = "_all")
         )
       ), 
       rownames = FALSE,
@@ -38,8 +39,8 @@ server <- function(input, output, session) {
         dom = 't',
         autoWidth = TRUE,
         columnDefs = list(
-          list(width = "50%", targets = "_all"),
-          list(className = "dt-right", targets = 1)
+          list(width = "33%", targets = "_all"),
+          list(className = "dt-right", targets = "_all")
         )
       ), 
       rownames = FALSE
@@ -54,8 +55,13 @@ server <- function(input, output, session) {
       info <- input$out_AddRemStock_cell_edit
       r <-  as.numeric(info$row)
       c <- as.numeric(info$col) + 1
-      k <- ifelse(c == 2, as.numeric(info$value), as.character(info$value))
-      l_RVals$df_AddRemStock[r, c] <- k
+      if (c == 1) {
+        l_RVals$df_AddRemStock[r, c] <- as.character(info$value)
+      } else if (c == 2) {
+        l_RVals$df_AddRemStock[r, c] <- as.numeric(info$value)
+      } else if (c == 3) {
+        l_RVals$df_AddRemStock[r, c] <- as.character(info$value)
+      }
     }
   )
   # Changing portfolio composition
@@ -65,19 +71,25 @@ server <- function(input, output, session) {
       info <- input$out_PortComp_cell_edit
       r <-  as.numeric(info$row)
       c <- as.numeric(info$col) + 1
-      k <- ifelse(c == 2, as.numeric(info$value), as.character(info$value))
-      l_RVals$df_PortComp[r, c] <- k
+      if (c == 1) {
+        l_RVals$df_PortComp[r, c] <- as.character(info$value)
+      } else if (c == 2) {
+        l_RVals$df_PortComp[r, c] <- as.numeric(info$value)
+      } else if (c == 3) {
+        l_RVals$df_PortComp[r, c] <- as.character(info$value)
+      }
     }
   )
   # Add stock to portfolio
   observeEvent(
     eventExpr = input$in_AddStock,
     handlerExpr = {
+      l_RVals$df_PortComp$PurchaseDate <- as.Date(l_RVals$df_PortComp$PurchaseDate)
       l_RVals$df_PortComp <- rbind(
         l_RVals$df_PortComp,
         l_RVals$df_AddRemStock[base::trimws(l_RVals$df_AddRemStock$Stock) != ""]
       )
-      l_RVals$df_AddRemStock[1, ] <- c("", 0)
+      l_RVals$df_AddRemStock[1, ] <- c("Ticker", 0, as.character(Sys.Date()))
     }
   )
   # Remove stock from portfolio
@@ -85,7 +97,7 @@ server <- function(input, output, session) {
     eventExpr = input$in_RemoveStock,
     handlerExpr = {
       l_RVals$df_PortComp <- l_RVals$df_PortComp[l_RVals$df_PortComp$Stock != l_RVals$df_AddRemStock[1, 1], ]
-      l_RVals$df_AddRemStock[1, ] <- c("", 0)
+      l_RVals$df_AddRemStock[1, ] <- c("Ticker", 0, as.character(Sys.Date()))
     }
   )
   # Update portfolio
@@ -104,26 +116,37 @@ server <- function(input, output, session) {
       l_RVals$Dates <- f_GetDates(l_RVals$Stocks)
       updateDateRangeInput(
         session = session,
-        inputId = "in_DateRange",
-        start = l_RVals$Dates[1],
+        inputId = "in_DateRangePrice",
+        start = f_FOY(),
+        end = l_RVals$Dates[length(l_RVals$Dates)]
+      )
+      updateDateRangeInput(
+        session = session,
+        inputId = "in_DateRangeRisk",
+        start = f_FOY(),
         end = l_RVals$Dates[length(l_RVals$Dates)]
       )
     }
   )
   
   ## Outputs
+  output$out_FillerSpace <- renderText({" "})
   output$out_hcPriceDev <- renderHighchart({
     req(input$in_UpdatePortfolio)
-    f_hcPriceDev(l_RVals$Stocks, input$in_DateRange[1], input$in_DateRange[2])
+    f_hcPriceDev(l_RVals$Stocks, l_RVals$df_PortComp, input$in_DateRangePrice[1], input$in_DateRangePrice[2])
+  })
+  output$out_hcOHLC <- renderHighchart({
+    req(input$in_UpdatePortfolio)
+    f_hcOHLC(l_RVals$Stocks, input$in_OHLCStock)
   })
   output$out_hcCorrMat <- renderHighchart({
     req(input$in_UpdatePortfolio)
-    f_hcCorrMat(stock = l_RVals$Stocks, input$in_DateRange[1], input$in_DateRange[2], method = input$in_CorrMethod)
+    f_hcCorrMat(stock = l_RVals$Stocks, input$in_DateRangeRisk[1], input$in_DateRangeRisk[2], method = input$in_CorrMethod)
   })
   output$out_RiskContr <- renderDT({
     req(input$in_UpdatePortfolio)
     DT::datatable(
-      data = f_RiskComp(l_RVals$Stocks, l_RVals$df_PortComp, input$in_DateRange[1], input$in_DateRange[2]),
+      data = f_RiskComp(l_RVals$Stocks, l_RVals$df_PortComp, input$in_DateRangeRisk[1], input$in_DateRangeRisk[2]),
       editable = FALSE,
       options = list(
         dom = 't', 
@@ -135,10 +158,6 @@ server <- function(input, output, session) {
       ), 
       rownames = FALSE
     )
-  })
-  output$out_hcOHLC <- renderHighchart({
-    req(input$in_UpdatePortfolio)
-    f_hcOHLC(l_RVals$Stocks, input$in_OHLCStock)
   })
 }
 
