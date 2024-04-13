@@ -13,6 +13,6 @@ library(highcharter)
 
 
 ### Shiny ----
+library(shiny)
 library(DT)
 library(bslib)
-library(shiny)
