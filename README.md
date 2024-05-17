@@ -11,9 +11,9 @@ It consist of a [portfolio compositon](#portfolio-composition) tab in which the 
 ## Demo
 
 <p align = "center">
-  <img src = "https://github.com/iamklager/Stock-Monitoring-Tool/raw/main/.github/portfolio_composition.png" width = "300" />
-  <img src = "https://github.com/iamklager/Stock-Monitoring-Tool/raw/main/.github/price_development.png" width = "300" />
-  <img src = "https://github.com/iamklager/Stock-Monitoring-Tool/raw/main/.github/risk_contribution.png" width = "300" />
+  <img src = "https://github.com/iamklager/Stock-Monitoring-Tool/raw/main/.github/portfolio_composition.png" width = "270" />
+  <img src = "https://github.com/iamklager/Stock-Monitoring-Tool/raw/main/.github/price_development.png" width = "270" />
+  <img src = "https://github.com/iamklager/Stock-Monitoring-Tool/raw/main/.github/risk_contribution.png" width = "270" />
 </p>
 
 ## Requirements
