@@ -16,6 +16,8 @@ It consist of a [portfolio compositon](#portfolio-composition) tab in which the 
   <img src = "https://github.com/iamklager/Stock-Monitoring-Tool/raw/main/.github/risk_contribution.png" width = "270" />
 </p>
 
+See the [demo video](https://youtu.be/PeuBgbIHz6A).
+
 ## Requirements
 
 To run this project the user must have installed R in combination with the following libraries:
