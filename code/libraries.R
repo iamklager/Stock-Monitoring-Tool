@@ -6,6 +6,7 @@
 library(dplyr)
 library(quantmod)
 library(readxl)
+library(reshape2)
 
 
 ### Visual ----

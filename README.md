@@ -8,6 +8,7 @@ A dashboard to monitor the performance and risk of a stock portfolio. Built in R
 This tool allows the user to simulate and monitor a portfolio of stocks.  
 It consist of a [portfolio compositon](#portfolio-composition) tab in which the portfolio can be edited, a [price development](#price-development) in which the price changes of the stocks are displayed, and the [risk contribution](#risk-contribution) tab that decomposes the portfolio risk and shows the correlation between the stocks.
 
+
 ## Demo
 
 <p align = "center">
@@ -16,7 +17,6 @@ It consist of a [portfolio compositon](#portfolio-composition) tab in which the 
   <img src = "https://github.com/iamklager/Stock-Monitoring-Tool/raw/main/.github/risk_contribution.png" width = "270" />
 </p>
 
-See the [demo video](https://youtu.be/PeuBgbIHz6A).
 
 ## Requirements
 
