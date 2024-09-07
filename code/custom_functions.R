@@ -117,7 +117,8 @@ f_hcCorrMat <- function(stocks, start_date, end_date, method = "pearson") {
     hc_yAxis(labels = list(style = list(fontSize = "10px")), title = list(text = ""), reversed = TRUE) %>%
     hc_tooltip(pointFormat = "rho: {point.value:.3f}") %>%
     hc_legend(layout = "vertical", align = "right", verticalAlign = "middle") %>%
-    hc_add_theme(hc_theme_bs_superhero())
+    hc_add_theme(hc_theme_bs_superhero()) %>%
+    hc_size(height = 500,width = 650)
 }
 
 
@@ -159,11 +160,16 @@ f_RiskComp <- function(stocks, port_comp, rfr, annualize, start_date, end_date) 
       return(sr)
     }
   })
-  cov_mat <- cov(returns[, -1], use = "complete.obs")
+  cov_mat <- cov(returns[, -1], use = "pairwise.complete.obs")
   alloc_risk <- sqrt(port_comp$Weight %*% cov_mat %*% port_comp$Weight)[1, 1]
   mcs <- ((port_comp$Weight %*% cov_mat)/alloc_risk)[1, ]
   cs <- port_comp$Weight * mcs
   pcs <- cs/alloc_risk
+  
+  # Effective number of uncorrelated bets
+  tor_mat <- torsion(sigma = cov_mat, model = "minimum-torsion")
+  b <- rep(1 / length(stocks), length(stocks))
+  eff_bets <- uncorbets::effective_bets(b = b, sigma = cov_mat, t = tor_mat)
   
   # Result
   res <- data.frame(
@@ -173,7 +179,21 @@ f_RiskComp <- function(stocks, port_comp, rfr, annualize, start_date, end_date) 
     SR = sharpe_ratios,
     MCS = mcs,
     CS = cs,
-    PCS = pcs
+    PCS = pcs,
+    EB = eff_bets$p
+  )
+  res <- rbind(
+    res,
+    data.frame(
+      Stock = "Portfolio",
+      Weight = 1,
+      SD = port_sd,
+      SR = (mean(port_ret) - rfr) / port_sd,
+      MCS = sum(res$MCS),
+      CS = sum(res$CS),
+      PCS = sum(res$PCS),
+      EB = eff_bets$enb
+    )
   )
   row.names(res) <- NULL
   res[, 2:ncol(res)] <- round(res[, 2:ncol(res)], 3)

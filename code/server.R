@@ -145,19 +145,25 @@ server <- function(input, output, session) {
   })
   output$out_RiskContr <- renderDT({
     req(input$in_UpdatePortfolio)
+    df <- f_RiskComp(
+      l_RVals$Stocks, l_RVals$df_PortComp, input$in_RFR, input$in_AnnualizeSR, input$in_DateRangeRisk[1], 
+      input$in_DateRangeRisk[2]
+    )
     DT::datatable(
-      data = f_RiskComp(l_RVals$Stocks, l_RVals$df_PortComp, input$in_RFR, input$in_AnnualizeSR, input$in_DateRangeRisk[1], input$in_DateRangeRisk[2]),
+      data = df,
       editable = FALSE,
+      rownames = TRUE,
       options = list(
         dom = 't', 
         ordering = TRUE,
         autoWidth = TRUE,
         columnDefs = list(
+          list(visible = F, targets = 0),
           list(className = "dt-right", targets = 1:5)
         )
-      ), 
-      rownames = FALSE
-    )
+      )
+    ) |>
+      formatStyle(0, target = "row", fontWeight = styleEqual(dim(df)[1], "bold"))
   })
 }
 

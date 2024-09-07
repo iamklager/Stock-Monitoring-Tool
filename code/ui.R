@@ -1,11 +1,13 @@
-ui <- navbarPage(
+# ui <- navbarPage(
+ui <- page_navbar(
   ## Design stuff
-  theme = bs_theme(preset = "superhero"),
+  theme = bs_theme(preset = "superhero", primary = "#3b4d5b"),
   title = "Stock Monitoring Tool",
   selected = "Portfolio Composition",
   fillable = TRUE,
   position = "static-top",
-  windowTitle = "Stock Monitoring Tool",
+  #windowTitle = "Stock Monitoring Tool",
+  window_title = "Stock Monitoring Tool",
   
   ## Portfolio composition
   nav_panel(
@@ -45,9 +47,9 @@ ui <- navbarPage(
         # Update portfolio button
         div(
           style = "display: flex; justify-content: center; align-items: center;",
-          actionButton(
-            inputId = "in_UpdatePortfolio",
-            label = "Update", width = "50%"
+          input_task_button(
+            id = "in_UpdatePortfolio",
+            label = "Update", style = "width: 50%"
           )
         )
       )
@@ -70,7 +72,7 @@ ui <- navbarPage(
             format = 
           ),
           # Stock selection
-          selectInput(
+          selectizeInput(
             inputId = "in_OHLCStock",
             label = "Stock",
             choices = ""
@@ -100,7 +102,7 @@ ui <- navbarPage(
             format = 
           ),
           # Correlation method
-          selectInput(
+          selectizeInput(
             inputId = "in_CorrMethod",
             label = "Corrrelation Method",
             choices = c("pearson", "kendall", "spearman")
@@ -121,7 +123,6 @@ ui <- navbarPage(
         ),
         # Correlation and risk contribution
         layout_column_wrap(
-          width = 1/2,
           highchartOutput(outputId = "out_hcCorrMat"),
           DTOutput(outputId = "out_RiskContr")
         )
