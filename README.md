@@ -8,7 +8,7 @@ To avoid repeatedly running the same R-scripts, I wrote this tool to tool allows
 
 ## How to Run
 
-After downloading the project folder, you can start the application by running the *main.R* script. Doing this will automatically load all necessary functions before running the \emph*StockMonitoring()* function, which will start the application. To install all necessary dependencies automatically, you can simply set *install\_dependencies* to *TRUE*. Setting *clear\_database* to *TRUE* will delete all the data stored from previous uses.
+After downloading the project folder, you can start the application by running the *main.R* script. Doing this will automatically load all necessary functions before running the *StockMonitoring()* function, which will start the application. To install all necessary dependencies automatically, you can simply set *install\_dependencies* to *TRUE*. Setting *clear\_database* to *TRUE* will delete all the data stored from previous uses.
 ```r
 StockMonitoring(install_dependencies = FALSE, clear_database = FALSE)
 ```
